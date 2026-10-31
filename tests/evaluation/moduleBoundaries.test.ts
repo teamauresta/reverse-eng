@@ -335,7 +335,7 @@ describe("test lane import boundaries", () => {
     const oxlintConfig = JSON.parse(
       await readFile(resolve(".oxlintrc.json"), "utf8"),
     ) as { jsPlugins?: Array<{ name: string; specifier: string }> };
-    oxlintConfig.jsPlugins = oxlintConfig.jsPlugins?.map((plugin) => ({
+    oxlintConfig.jsPlugins = (oxlintConfig.jsPlugins ?? []).map((plugin) => ({
       ...plugin,
       specifier: resolve(plugin.specifier),
     }));
