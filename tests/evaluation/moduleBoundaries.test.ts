@@ -1,5 +1,5 @@
 import { execFile, spawnSync } from "node:child_process";
-import { copyFile, mkdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -330,7 +330,16 @@ describe("test lane import boundaries", () => {
   it("checks the test-lane import matrix in one lint invocation", async () => {
     const temporary = await createTestTempDirectory("rea-test-lane-");
     const config = join(temporary, ".oxlintrc.json");
-    await copyFile(resolve(".oxlintrc.json"), config);
+    // The copied config lives outside the repository, so resolve its
+    // config-relative JS plugin specifiers against the repository root.
+    const oxlintConfig = JSON.parse(
+      await readFile(resolve(".oxlintrc.json"), "utf8"),
+    ) as { jsPlugins?: Array<{ name: string; specifier: string }> };
+    oxlintConfig.jsPlugins = oxlintConfig.jsPlugins?.map((plugin) => ({
+      ...plugin,
+      specifier: resolve(plugin.specifier),
+    }));
+    await writeFile(config, JSON.stringify(oxlintConfig));
     for (const [file, dependency] of cases) {
       await mkdir(dirname(join(temporary, file)), { recursive: true });
       await writeFile(
